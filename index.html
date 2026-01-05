@@ -35,6 +35,9 @@
         #btn-agregar-parada {
             background-color: #28a745; 
             margin-top: 10px;
+            color: white;
+            border: none;
+            cursor: pointer;
         }
         #btn-agregar-parada:hover {
             background-color: #1e7e34;
@@ -99,10 +102,8 @@
     </div>
     <h2 style="text-align:center;">FORMULARIO - EMERGENT COLD</h2>
 
-    <!-- ✅ Formulario compatible con la página automática de Netlify -->
-    <form name="registro-emergent-cold" method="POST" netlify>
-        <input type="hidden" name="form-name" value="registro-emergent-cold">
-
+    <form action="guardar.php" method="POST">
+        
         <label for="lugar">Lugar de operación:</label>
         <select name="lugar" id="lugar" required onchange="actualizarCampos()">
             <option value="">Seleccione una opción</option>
@@ -130,7 +131,7 @@
         <h3 style="text-align:center; font-size:1.1em; color:#d9611b;">REGISTRO DE PARADAS DE OPERACION</h3>
         
         <div id="paradas-contenedor">
-        </div>
+            </div>
 
         <button type="button" id="btn-agregar-parada" onclick="agregarCampoParada()">
             + Agregar Parada
@@ -159,7 +160,7 @@
                 <span class="time-hint" style="opacity: 1; top: -15px;">Gramos (0-999)</span>
             </div>
         </div>
-        <button type="submit">Enviar</button>
+        <button type="submit">Enviar Reporte a MySQL</button>
     </form>
 
     <script>
@@ -187,27 +188,16 @@
             var turnoAsignadoValue = "";
 
             switch (lugarSeleccionado) {
-                case "Celta":
-                    jefeAsignado = "Lorena Diaz";
-                    break;
-                case "Interpark":
-                    jefeAsignado = "Carolina Rodriguez";
-                    break;
-                case "Giron":
-                    jefeAsignado = "Jeison Aranda";
-                    break;
-                case "Buga":
-                    jefeAsignado = "Giovanny Ayala"; 
-                    break;
-                default:
-                    jefeAsignado = "";
-                    turnoAsignadoValue = "";
+                case "Celta": jefeAsignado = "Lorena Diaz"; break;
+                case "Interpark": jefeAsignado = "Carolina Rodriguez"; break;
+                case "Giron": jefeAsignado = "Jeison Aranda"; break;
+                case "Buga": jefeAsignado = "Giovanny Ayala"; break;
+                default: jefeAsignado = ""; turnoAsignadoValue = "";
             }
 
             if (jefeAsignado !== "") {
                 turnoAsignadoValue = determinarTurnoEstandar(currentHour);
             }
-            
             campoJefe.value = jefeAsignado;
             campoTurno.value = turnoAsignadoValue;
         }
@@ -237,13 +227,6 @@
             value = value.substring(0, 5);
             inputElement.value = value;
             convertirHoraMilitar(inputElement, displayElement);
-            if (value.length === 5) {
-                var allInputs = Array.from(document.querySelectorAll('.time-input-masked'));
-                var currentIndex = allInputs.indexOf(inputElement);
-                if (currentIndex !== -1 && currentIndex < allInputs.length - 1) {
-                    allInputs[currentIndex + 1].focus();
-                }
-            }
         }
 
         function convertirHoraMilitar(inputElement, displayElement) {
@@ -255,21 +238,13 @@
                 var mm = parseInt(parts[1]);
                 if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
                     var ampm = hh >= 12 ? 'P.M.' : 'A.M.';
-                    var h12 = hh % 12;
-                    h12 = h12 ? h12 : 12; 
-                    var h12_str = String(h12).padStart(2, '0');
-                    var mm_str = String(mm).padStart(2, '0');
+                    var h12 = hh % 12 || 12; 
                     timeDisplay.style.color = '#155724'; 
-                    timeDisplay.innerHTML = 'Hora Normal: ' + h12_str + ':' + mm_str + ' ' + ampm;
+                    timeDisplay.innerHTML = 'Hora Normal: ' + String(h12).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' ' + ampm;
                 } else {
                     timeDisplay.style.color = '#dc3545'; 
-                    timeDisplay.innerHTML = '❌ Hora inválida (HH:00-23, MM:00-59)';
+                    timeDisplay.innerHTML = '❌ Hora inválida';
                 }
-            } else if (value.length > 0 && value.length < 5) {
-                timeDisplay.style.color = '#dc3545'; 
-                timeDisplay.innerHTML = '❌ Formato incompleto. Escriba 4 dígitos.';
-            } else {
-                timeDisplay.innerHTML = ''; 
             }
         }
 
@@ -278,72 +253,40 @@
             var nuevoCampo = document.createElement('div');
             nuevoCampo.className = 'parada-group';
             var index = contenedor.children.length + 1;
-            
-            var displayIdInicio = 'display-inicio-' + index;
-            var displayIdFin = 'display-fin-' + index;
+            var idI = 'display-inicio-' + index;
+            var idF = 'display-fin-' + index;
             
             nuevoCampo.innerHTML = `
                 <p style="font-weight:bold; margin-top:0;">Parada #${index}</p>
                 <div class="time-row">
                     <div>
-                        <span class="time-label">Hora Inicio (Militar HH:MM):</span>
-                        <input type="tel" 
-                            name="parada_inicio[]" 
-                            class="time-input-masked"
-                            required 
-                            pattern="([01][0-9]|2[0-3]):[0-5][0-9]" 
-                            title="Formato de hora militar (24h): HH:MM. Ej: 00:30, 15:45" 
-                            placeholder="HH:MM" 
-                            maxlength="5"
-                            oninput="applyTimeMask(this, '${displayIdInicio}')">
-                        <span id="${displayIdInicio}" class="time-display"></span>
+                        <span class="time-label">Hora Inicio:</span>
+                        <input type="tel" name="parada_inicio[]" class="time-input-masked" required placeholder="HH:MM" maxlength="5" oninput="applyTimeMask(this, '${idI}')">
+                        <span id="${idI}" class="time-display"></span>
                     </div>
                     <div>
-                        <span class="time-label">Hora Final (Militar HH:MM):</span>
-                        <input type="tel" 
-                            name="parada_fin[]" 
-                            class="time-input-masked"
-                            required 
-                            pattern="([01][0-9]|2[0-3]):[0-5][0-9]" 
-                            title="Formato de hora militar (24h): HH:MM. Ej: 00:30, 15:45" 
-                            placeholder="HH:MM" 
-                            maxlength="5"
-                            oninput="applyTimeMask(this, '${displayIdFin}')">
-                        <span id="${displayIdFin}" class="time-display"></span>
+                        <span class="time-label">Hora Final:</span>
+                        <input type="tel" name="parada_fin[]" class="time-input-masked" required placeholder="HH:MM" maxlength="5" oninput="applyTimeMask(this, '${idF}')">
+                        <span id="${idF}" class="time-display"></span>
                     </div>
                 </div>
-                <label style="margin-top:15px;">Motivo:</label>
+                <label>Motivo:</label>
                 ${generarSelectMotivo()}
-                <button type="button" style="background-color:#dc3545; width:auto; padding:5px 10px; margin-top:10px;" onclick="this.parentNode.remove()">
-                    Eliminar
-                </button>`;
-            
+                <button type="button" style="background-color:#dc3545; width:auto; padding:5px 10px; margin-top:10px;" onclick="this.parentNode.remove()">Eliminar</button>`;
             contenedor.appendChild(nuevoCampo);
         }
         
         function manejarOtroMotivo(selectElement) {
             var otroInput = selectElement.nextElementSibling; 
-            if (selectElement.value === 'otro') {
-                otroInput.style.display = 'block';
-                otroInput.required = true;
-            } else {
-                otroInput.style.display = 'none';
-                otroInput.required = false;
-                otroInput.value = '';
-            }
+            otroInput.style.display = (selectElement.value === 'otro') ? 'block' : 'none';
+            otroInput.required = (selectElement.value === 'otro');
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             var today = new Date();
-            var dd = String(today.getDate()).padStart(2, '0');
-            var mm = String(today.getMonth() + 1).padStart(2, '0');
-            var yyyy = today.getFullYear();
-            var currentDate = yyyy + '-' + mm + '-' + dd; 
-            document.getElementById('fecha').value = currentDate;
-            document.getElementById("lugar").addEventListener('change', actualizarCampos);
+            document.getElementById('fecha').value = today.toISOString().split('T')[0];
             agregarCampoParada();
         });
     </script>
-
 </body>
 </html>
