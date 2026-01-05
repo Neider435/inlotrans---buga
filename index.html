@@ -35,9 +35,6 @@
         #btn-agregar-parada {
             background-color: #28a745; 
             margin-top: 10px;
-            color: white;
-            border: none;
-            cursor: pointer;
         }
         #btn-agregar-parada:hover {
             background-color: #1e7e34;
@@ -102,8 +99,16 @@
     </div>
     <h2 style="text-align:center;">FORMULARIO - EMERGENT COLD</h2>
 
-    <form action="guardar.php" method="POST">
-        
+    <form name="registro-emergent-cold" method="POST" data-netlify="true">
+        <input type="hidden" name="form-name" value="registro-emergent-cold">
+
+        <div style="display:none;">
+            <input type="text" name="parada_inicio[]">
+            <input type="text" name="parada_fin[]">
+            <input type="text" name="motivo[]">
+            <input type="text" name="otro_motivo[]">
+        </div>
+
         <label for="lugar">Lugar de operación:</label>
         <select name="lugar" id="lugar" required onchange="actualizarCampos()">
             <option value="">Seleccione una opción</option>
@@ -160,7 +165,7 @@
                 <span class="time-hint" style="opacity: 1; top: -15px;">Gramos (0-999)</span>
             </div>
         </div>
-        <button type="submit">Enviar Reporte a MySQL</button>
+        <button type="submit">Enviar Registro</button>
     </form>
 
     <script>
@@ -198,6 +203,7 @@
             if (jefeAsignado !== "") {
                 turnoAsignadoValue = determinarTurnoEstandar(currentHour);
             }
+            
             campoJefe.value = jefeAsignado;
             campoTurno.value = turnoAsignadoValue;
         }
@@ -238,14 +244,14 @@
                 var mm = parseInt(parts[1]);
                 if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
                     var ampm = hh >= 12 ? 'P.M.' : 'A.M.';
-                    var h12 = hh % 12 || 12; 
+                    var h12 = hh % 12; h12 = h12 ? h12 : 12; 
                     timeDisplay.style.color = '#155724'; 
                     timeDisplay.innerHTML = 'Hora Normal: ' + String(h12).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' ' + ampm;
                 } else {
                     timeDisplay.style.color = '#dc3545'; 
                     timeDisplay.innerHTML = '❌ Hora inválida';
                 }
-            }
+            } else { timeDisplay.innerHTML = ''; }
         }
 
         function agregarCampoParada() {
@@ -260,17 +266,17 @@
                 <p style="font-weight:bold; margin-top:0;">Parada #${index}</p>
                 <div class="time-row">
                     <div>
-                        <span class="time-label">Hora Inicio:</span>
+                        <span class="time-label">Inicio (HH:MM):</span>
                         <input type="tel" name="parada_inicio[]" class="time-input-masked" required placeholder="HH:MM" maxlength="5" oninput="applyTimeMask(this, '${idI}')">
                         <span id="${idI}" class="time-display"></span>
                     </div>
                     <div>
-                        <span class="time-label">Hora Final:</span>
+                        <span class="time-label">Fin (HH:MM):</span>
                         <input type="tel" name="parada_fin[]" class="time-input-masked" required placeholder="HH:MM" maxlength="5" oninput="applyTimeMask(this, '${idF}')">
                         <span id="${idF}" class="time-display"></span>
                     </div>
                 </div>
-                <label>Motivo:</label>
+                <label style="margin-top:10px;">Motivo:</label>
                 ${generarSelectMotivo()}
                 <button type="button" style="background-color:#dc3545; width:auto; padding:5px 10px; margin-top:10px;" onclick="this.parentNode.remove()">Eliminar</button>`;
             contenedor.appendChild(nuevoCampo);
@@ -278,13 +284,19 @@
         
         function manejarOtroMotivo(selectElement) {
             var otroInput = selectElement.nextElementSibling; 
-            otroInput.style.display = (selectElement.value === 'otro') ? 'block' : 'none';
-            otroInput.required = (selectElement.value === 'otro');
+            if (selectElement.value === 'otro') {
+                otroInput.style.display = 'block'; otroInput.required = true;
+            } else {
+                otroInput.style.display = 'none'; otroInput.required = false; otroInput.value = '';
+            }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             var today = new Date();
-            document.getElementById('fecha').value = today.toISOString().split('T')[0];
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            document.getElementById('fecha').value = yyyy + '-' + mm + '-' + dd;
             agregarCampoParada();
         });
     </script>
