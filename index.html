@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - Emergent Cold</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 40px;
+        }
+        .logo-container {
+            position: absolute; 
+            top: 50px;
+            left: 50px;
+        }
+        .logo-container img {
+            width: 200px; 
+            height: auto;
+        }
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            width: 500px;
+            margin: auto;
+        }
+        .parada-group {
+            border: 1px dashed #ced4da;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 5px;
+        }
+        #btn-agregar-parada {
+            background-color: #28a745; 
+            margin-top: 10px;
+        }
+        #btn-agregar-parada:hover {
+            background-color: #1e7e34;
+        }
+        label {
+            font-weight: bold;
+            display: block; 
+            margin-top: 15px;
+        }
+        select, input, button { 
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border-radius: 8px;
+            border: 1px solid #170303;
+        }
+        .time-row, .quantity-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .time-row > div, .quantity-row > div {
+            flex-grow: 1;
+            position: relative;
+        }
+        .quantity-row input[type="number"] {
+            width: calc(100% - 10px); 
+        }
+        .time-display {
+            display: block;
+            margin-top: 5px;
+            font-size: 0.85em;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .time-label {
+            font-weight: bold;
+            display: block; 
+            margin-top: 5px;
+            color: #007bff;
+        }
+        button:not(#btn-agregar-parada) { 
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:not(#btn-agregar-parada):hover {
+            background-color: #0056b3;
+        }
+        .time-input-masked {
+            text-align: center;
+            font-size: 1.1em;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <img src="prueba.png" alt="Logo de la Empresa"> 
+    </div>
+    <h2 style="text-align:center;">FORMULARIO - EMERGENT COLD</h2>
+
+    <!-- ✅ Formulario compatible con Netlify Forms -->
+    <form name="registro-emergent-cold" method="POST" data-netlify="true">
+        <input type="hidden" name="form-name" value="registro-emergent-cold">
+
+        <label for="lugar">Lugar de operación:</label>
+        <select name="lugar" id="lugar" required onchange="actualizarCampos()">
+            <option value="">Seleccione una opción</option>
+            <option value="Celta">Celta</option>
+            <option value="Interpark">Interpark</option>
+            <option value="Buga">Buga</option>
+            <option value="Giron">Giron</option>
+        </select>
+        
+        <label for="jefe">Jefe Asignado:</label>
+        <input type="text" name="jefe" id="jefe" readonly required>
+        
+        <label for="fecha">Fecha:</label>
+        <input type="date" name="fecha" id="fecha" required>
+
+        <label for="turno">Turno Asignado:</label>
+        <select name="turno" id="turno" required>
+            <option value="">Seleccione un turno</option>
+            <option value="Manana">Mañana</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noche">Noche</option>
+        </select>
+        
+        <hr style="margin-top: 25px; border-style: dotted;">
+        <h3 style="text-align:center; font-size:1.1em; color:#d9611b;">REGISTRO DE PARADAS DE OPERACION</h3>
+        
+        <div id="paradas-contenedor">
+        </div>
+
+        <button type="button" id="btn-agregar-parada" onclick="agregarCampoParada()">
+            + Agregar Parada
+        </button>
+        
+        <hr style="margin-top: 25px; border-style: dotted;">
+        <h3 style="text-align:center; font-size:1.1em; color:#296097;">TOTALES DE TURNO</h3>
+        
+        <label for="total_personas">Total Personas (Empleados):</label>
+        <input type="number" name="total_personas" id="total_personas" min="1" placeholder="Ej: 8" required onfocus="clearAndFocus(this)">
+
+        <label for="canastas_totales">Total Canastas:</label>
+        <input type="number" name="canastas_totales" id="canastas_totales" min="0" placeholder="Ej: 150" required onfocus="clearAndFocus(this)">
+
+        <label for="bultos_totales">Total Bultos:</label>
+        <input type="number" name="bultos_totales" id="bultos_totales" min="0" placeholder="Ej: 50" required onfocus="clearAndFocus(this)">
+        
+        <label>Total Kilos / Gramos:</label>
+        <div class="quantity-row">
+            <div>
+                <input type="number" name="kilos_totales" id="kilos_totales" min="0" placeholder="0" required onfocus="clearAndFocus(this)">
+                <span class="time-hint" style="opacity: 1; top: -15px;">Kilos</span>
+            </div>
+            <div>
+                <input type="number" name="gramos_totales" id="gramos_totales" min="0" max="999" placeholder="0" required onfocus="clearAndFocus(this)" oninput="limitarGramos(this)">
+                <span class="time-hint" style="opacity: 1; top: -15px;">Gramos (0-999)</span>
+            </div>
+        </div>
+        <button type="submit">Enviar</button>
+    </form>
+
+    <script>
+        function limitarGramos(element) {
+            var valor = parseInt(element.value);
+            if (valor > 999) { element.value = 999; } 
+        }
+        function clearAndFocus(element) {
+            if (element.value === "0" || element.value === "") { element.value = ''; }
+        }
+        
+        function determinarTurnoEstandar(currentHour) {
+            if (currentHour >= 6 && currentHour < 14) { return "Manana"; } 
+            else if (currentHour >= 14 && currentHour < 22) { return "Tarde"; } 
+            else { return "Noche"; } 
+        }
+        
+        function actualizarCampos() {
+            var lugarSeleccionado = document.getElementById("lugar").value;
+            var campoJefe = document.getElementById("jefe");
+            var campoTurno = document.getElementById("turno");
+            var jefeAsignado = "";
+            var now = new Date();
+            var currentHour = now.getHours();
+            var turnoAsignadoValue = "";
+
+            switch (lugarSeleccionado) {
+                case "Celta":
+                    jefeAsignado = "Lorena Diaz";
+                    break;
+                case "Interpark":
+                    jefeAsignado = "Carolina Rodriguez";
+                    break;
+                case "Giron":
+                    jefeAsignado = "Jeison Aranda";
+                    break;
+                case "Buga":
+                    jefeAsignado = "Giovanny Ayala"; 
+                    break;
+                default:
+                    jefeAsignado = "";
+                    turnoAsignadoValue = "";
+            }
+
+            if (jefeAsignado !== "") {
+                turnoAsignadoValue = determinarTurnoEstandar(currentHour);
+            }
+            
+            campoJefe.value = jefeAsignado;
+            campoTurno.value = turnoAsignadoValue;
+        }
+
+        function generarSelectMotivo() {
+            return `<select name="motivo[]" required onchange="manejarOtroMotivo(this)">
+                <option value="">Seleccione un motivo</option>
+                <option value="pausas_activas">Pausas Activas y/o Charla</option>
+                <option value="desayuno_almuerzo_cena">Desayuno, Almuerzo y Cena</option>
+                <option value="aseo">Aseo</option>
+                <option value="secado_piso">Secado de Piso</option>
+                <option value="alistamiento_producto">Alistamiento (Producto o insumos)</option>
+                <option value="revision_cambio_cedula">Revisión/Cambio de Cédula a Producto</option>
+                <option value="faltante_insumos">Faltante (Canastillas, vinipel, estibas, etc)</option> 
+                <option value="danos_equipo">Daños (Electricos, cosedora, montacargas, etc)</option>
+                <option value="cargue_canastas_orig">Cargue de Canastas</option>
+                <option value="enriedo_costales_orig">Enriedo de Costales</option>
+                <option value="otro">Otro (Especifique)</option>
+                </select><input type="text" name="otro_motivo[]" placeholder="Especifique el motivo 'Otro'" style="display:none; margin-top:5px;">`;
+        }
+        
+        function applyTimeMask(inputElement, displayElement) {
+            var value = inputElement.value.replace(/[^0-9]/g, '');
+            if (value.length > 2) {
+                value = value.substring(0, 2) + ':' + value.substring(2);
+            }
+            value = value.substring(0, 5);
+            inputElement.value = value;
+            convertirHoraMilitar(inputElement, displayElement);
+            if (value.length === 5) {
+                var allInputs = Array.from(document.querySelectorAll('.time-input-masked'));
+                var currentIndex = allInputs.indexOf(inputElement);
+                if (currentIndex !== -1 && currentIndex < allInputs.length - 1) {
+                    allInputs[currentIndex + 1].focus();
+                }
+            }
+        }
+
+        function convertirHoraMilitar(inputElement, displayElement) {
+            var value = inputElement.value;
+            var timeDisplay = document.getElementById(displayElement);
+            if (value.length === 5 && value.includes(':')) {
+                var parts = value.split(':');
+                var hh = parseInt(parts[0]);
+                var mm = parseInt(parts[1]);
+                if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+                    var ampm = hh >= 12 ? 'P.M.' : 'A.M.';
+                    var h12 = hh % 12;
+                    h12 = h12 ? h12 : 12; 
+                    var h12_str = String(h12).padStart(2, '0');
+                    var mm_str = String(mm).padStart(2, '0');
+                    timeDisplay.style.color = '#155724'; 
+                    timeDisplay.innerHTML = 'Hora Normal: ' + h12_str + ':' + mm_str + ' ' + ampm;
+                } else {
+                    timeDisplay.style.color = '#dc3545'; 
+                    timeDisplay.innerHTML = '❌ Hora inválida (HH:00-23, MM:00-59)';
+                }
+            } else if (value.length > 0 && value.length < 5) {
+                timeDisplay.style.color = '#dc3545'; 
+                timeDisplay.innerHTML = '❌ Formato incompleto. Escriba 4 dígitos.';
+            } else {
+                timeDisplay.innerHTML = ''; 
+            }
+        }
+
+        function agregarCampoParada() {
+            var contenedor = document.getElementById('paradas-contenedor');
+            var nuevoCampo = document.createElement('div');
+            nuevoCampo.className = 'parada-group';
+            var index = contenedor.children.length + 1;
+            
+            var displayIdInicio = 'display-inicio-' + index;
+            var displayIdFin = 'display-fin-' + index;
+            
+            nuevoCampo.innerHTML = `
+                <p style="font-weight:bold; margin-top:0;">Parada #${index}</p>
+                <div class="time-row">
+                    <div>
+                        <span class="time-label">Hora Inicio (Militar HH:MM):</span>
+                        <input type="tel" 
+                            name="parada_inicio[]" 
+                            class="time-input-masked"
+                            required 
+                            pattern="([01][0-9]|2[0-3]):[0-5][0-9]" 
+                            title="Formato de hora militar (24h): HH:MM. Ej: 00:30, 15:45" 
+                            placeholder="HH:MM" 
+                            maxlength="5"
+                            oninput="applyTimeMask(this, '${displayIdInicio}')">
+                        <span id="${displayIdInicio}" class="time-display"></span>
+                    </div>
+                    <div>
+                        <span class="time-label">Hora Final (Militar HH:MM):</span>
+                        <input type="tel" 
+                            name="parada_fin[]" 
+                            class="time-input-masked"
+                            required 
+                            pattern="([01][0-9]|2[0-3]):[0-5][0-9]" 
+                            title="Formato de hora militar (24h): HH:MM. Ej: 00:30, 15:45" 
+                            placeholder="HH:MM" 
+                            maxlength="5"
+                            oninput="applyTimeMask(this, '${displayIdFin}')">
+                        <span id="${displayIdFin}" class="time-display"></span>
+                    </div>
+                </div>
+                <label style="margin-top:15px;">Motivo:</label>
+                ${generarSelectMotivo()}
+                <button type="button" style="background-color:#dc3545; width:auto; padding:5px 10px; margin-top:10px;" onclick="this.parentNode.remove()">
+                    Eliminar
+                </button>`;
+            
+            contenedor.appendChild(nuevoCampo);
+        }
+        
+        function manejarOtroMotivo(selectElement) {
+            var otroInput = selectElement.nextElementSibling; 
+            if (selectElement.value === 'otro') {
+                otroInput.style.display = 'block';
+                otroInput.required = true;
+            } else {
+                otroInput.style.display = 'none';
+                otroInput.required = false;
+                otroInput.value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var today = new Date();
+            var dd = String(today.getDate()).padStart(2, '0');
+            var mm = String(today.getMonth() + 1).padStart(2, '0');
+            var yyyy = today.getFullYear();
+            var currentDate = yyyy + '-' + mm + '-' + dd; 
+            document.getElementById('fecha').value = currentDate;
+            document.getElementById("lugar").addEventListener('change', actualizarCampos);
+            agregarCampoParada();
+        });
+    </script>
+
+</body>
+</html>
