@@ -99,7 +99,7 @@
     </div>
     <h2 style="text-align:center;">FORMULARIO - EMERGENT COLD</h2>
 
-    <!-- ✅ Formulario compatible con Netlify Forms (sin redirect) -->
+    <!-- ✅ Formulario compatible con la página automática de Netlify -->
     <form name="registro-emergent-cold" method="POST" netlify>
         <input type="hidden" name="form-name" value="registro-emergent-cold">
 
@@ -163,7 +163,6 @@
     </form>
 
     <script>
-        // --- FUNCIONES AUXILIARES ---
         function limitarGramos(element) {
             var valor = parseInt(element.value);
             if (valor > 999) { element.value = 999; } 
@@ -211,10 +210,9 @@
             
             campoJefe.value = jefeAsignado;
             campoTurno.value = turnoAsignadoValue;
-            guardarDatos(); // Guardar al cambiar
         }
 
-        function generarSelectMotivo(index) {
+        function generarSelectMotivo() {
             return `<select name="motivo[]" required onchange="manejarOtroMotivo(this)">
                 <option value="">Seleccione un motivo</option>
                 <option value="pausas_activas">Pausas Activas y/o Charla</option>
@@ -228,9 +226,9 @@
                 <option value="cargue_canastas_orig">Cargue de Canastas</option>
                 <option value="enriedo_costales_orig">Enriedo de Costales</option>
                 <option value="otro">Otro (Especifique)</option>
-                </select><input type="text" name="otro_motivo[]" placeholder="Especifique el motivo 'Otro'" style="display:none; margin-top:5px;" id="otro_input_${index}">`;
+                </select><input type="text" name="otro_motivo[]" placeholder="Especifique el motivo 'Otro'" style="display:none; margin-top:5px;">`;
         }
-
+        
         function applyTimeMask(inputElement, displayElement) {
             var value = inputElement.value.replace(/[^0-9]/g, '');
             if (value.length > 2) {
@@ -246,7 +244,6 @@
                     allInputs[currentIndex + 1].focus();
                 }
             }
-            guardarDatos(); // Guardar al escribir hora
         }
 
         function convertirHoraMilitar(inputElement, displayElement) {
@@ -276,28 +273,15 @@
             }
         }
 
-        function manejarOtroMotivo(selectElement) {
-            var otroInput = selectElement.nextElementSibling; 
-            if (selectElement.value === 'otro') {
-                otroInput.style.display = 'block';
-                otroInput.required = true;
-            } else {
-                otroInput.style.display = 'none';
-                otroInput.required = false;
-                otroInput.value = '';
-            }
-            guardarDatos(); // Guardar al cambiar motivo
-        }
-
-        // --- GESTIÓN DE PARADAS DINÁMICAS CON PERSISTENCIA ---
         function agregarCampoParada() {
             var contenedor = document.getElementById('paradas-contenedor');
+            var nuevoCampo = document.createElement('div');
+            nuevoCampo.className = 'parada-group';
             var index = contenedor.children.length + 1;
+            
             var displayIdInicio = 'display-inicio-' + index;
             var displayIdFin = 'display-fin-' + index;
             
-            var nuevoCampo = document.createElement('div');
-            nuevoCampo.className = 'parada-group';
             nuevoCampo.innerHTML = `
                 <p style="font-weight:bold; margin-top:0;">Parada #${index}</p>
                 <div class="time-row">
@@ -311,8 +295,7 @@
                             title="Formato de hora militar (24h): HH:MM. Ej: 00:30, 15:45" 
                             placeholder="HH:MM" 
                             maxlength="5"
-                            oninput="applyTimeMask(this, '${displayIdInicio}')"
-                            id="inicio_${index}">
+                            oninput="applyTimeMask(this, '${displayIdInicio}')">
                         <span id="${displayIdInicio}" class="time-display"></span>
                     </div>
                     <div>
@@ -325,174 +308,42 @@
                             title="Formato de hora militar (24h): HH:MM. Ej: 00:30, 15:45" 
                             placeholder="HH:MM" 
                             maxlength="5"
-                            oninput="applyTimeMask(this, '${displayIdFin}')"
-                            id="fin_${index}">
+                            oninput="applyTimeMask(this, '${displayIdFin}')">
                         <span id="${displayIdFin}" class="time-display"></span>
                     </div>
                 </div>
                 <label style="margin-top:15px;">Motivo:</label>
-                ${generarSelectMotivo(index)}
-                <button type="button" style="background-color:#dc3545; width:auto; padding:5px 10px; margin-top:10px;" onclick="eliminarParada(this)">
+                ${generarSelectMotivo()}
+                <button type="button" style="background-color:#dc3545; width:auto; padding:5px 10px; margin-top:10px;" onclick="this.parentNode.remove()">
                     Eliminar
                 </button>`;
             
             contenedor.appendChild(nuevoCampo);
-            guardarDatos();
         }
-
-        function eliminarParada(button) {
-            button.closest('.parada-group').remove();
-            guardarDatos();
-        }
-
-        // --- PERSISTENCIA CON LOCALSTORAGE ---
-        function guardarDatos() {
-            const form = document.querySelector('form');
-            const data = {};
-
-            // Campos simples
-            ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) data[id] = el.value;
-            });
-
-            // Paradas
-            const paradas = [];
-            document.querySelectorAll('.parada-group').forEach((grupo, idx) => {
-                const inicio = grupo.querySelector('.time-input-masked:first-of-type')?.value || '';
-                const fin = grupo.querySelector('.time-input-masked:last-of-type')?.value || '';
-                const motivoSelect = grupo.querySelector('select[name="motivo[]"]');
-                const motivo = motivoSelect ? motivoSelect.value : '';
-                const otro = motivo === 'otro' ? grupo.querySelector('input[name="otro_motivo[]"]')?.value || '' : '';
-
-                paradas.push({ inicio, fin, motivo, otro });
-            });
-
-            data.paradas = paradas;
-            localStorage.setItem('formulario_emergent_cold', JSON.stringify(data));
-        }
-
-        function cargarDatos() {
-            const saved = localStorage.getItem('formulario_emergent_cold');
-            if (!saved) return;
-
-            const data = JSON.parse(saved);
-
-            // Restaurar campos simples
-            ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el && data[id] !== undefined) el.value = data[id];
-            });
-
-            // Restaurar paradas
-            const contenedor = document.getElementById('paradas-contenedor');
-            contenedor.innerHTML = '';
-            if (data.paradas && Array.isArray(data.paradas)) {
-                data.paradas.forEach((parada, idx) => {
-                    const index = idx + 1;
-                    const displayIdInicio = 'display-inicio-' + index;
-                    const displayIdFin = 'display-fin-' + index;
-
-                    const nuevoCampo = document.createElement('div');
-                    nuevoCampo.className = 'parada-group';
-                    nuevoCampo.innerHTML = `
-                        <p style="font-weight:bold; margin-top:0;">Parada #${index}</p>
-                        <div class="time-row">
-                            <div>
-                                <span class="time-label">Hora Inicio (Militar HH:MM):</span>
-                                <input type="tel" 
-                                    name="parada_inicio[]" 
-                                    class="time-input-masked"
-                                    required 
-                                    pattern="([01][0-9]|2[0-3]):[0-5][0-9]" 
-                                    title="Formato de hora militar (24h): HH:MM. Ej: 00:30, 15:45" 
-                                    placeholder="HH:MM" 
-                                    maxlength="5"
-                                    oninput="applyTimeMask(this, '${displayIdInicio}')"
-                                    id="inicio_${index}"
-                                    value="${parada.inicio}">
-                                <span id="${displayIdInicio}" class="time-display"></span>
-                            </div>
-                            <div>
-                                <span class="time-label">Hora Final (Militar HH:MM):</span>
-                                <input type="tel" 
-                                    name="parada_fin[]" 
-                                    class="time-input-masked"
-                                    required 
-                                    pattern="([01][0-9]|2[0-3]):[0-5][0-9]" 
-                                    title="Formato de hora militar (24h): HH:MM. Ej: 00:30, 15:45" 
-                                    placeholder="HH:MM" 
-                                    maxlength="5"
-                                    oninput="applyTimeMask(this, '${displayIdFin}')"
-                                    id="fin_${index}"
-                                    value="${parada.fin}">
-                                <span id="${displayIdFin}" class="time-display"></span>
-                            </div>
-                        </div>
-                        <label style="margin-top:15px;">Motivo:</label>
-                        <select name="motivo[]" required onchange="manejarOtroMotivo(this)">
-                            <option value="">Seleccione un motivo</option>
-                            <option value="pausas_activas" ${parada.motivo === 'pausas_activas' ? 'selected' : ''}>Pausas Activas y/o Charla</option>
-                            <option value="desayuno_almuerzo_cena" ${parada.motivo === 'desayuno_almuerzo_cena' ? 'selected' : ''}>Desayuno, Almuerzo y Cena</option>
-                            <option value="aseo" ${parada.motivo === 'aseo' ? 'selected' : ''}>Aseo</option>
-                            <option value="secado_piso" ${parada.motivo === 'secado_piso' ? 'selected' : ''}>Secado de Piso</option>
-                            <option value="alistamiento_producto" ${parada.motivo === 'alistamiento_producto' ? 'selected' : ''}>Alistamiento (Producto o insumos)</option>
-                            <option value="revision_cambio_cedula" ${parada.motivo === 'revision_cambio_cedula' ? 'selected' : ''}>Revisión/Cambio de Cédula a Producto</option>
-                            <option value="faltante_insumos" ${parada.motivo === 'faltante_insumos' ? 'selected' : ''}>Faltante (Canastillas, vinipel, estibas, etc)</option> 
-                            <option value="danos_equipo" ${parada.motivo === 'danos_equipo' ? 'selected' : ''}>Daños (Electricos, cosedora, montacargas, etc)</option>
-                            <option value="cargue_canastas_orig" ${parada.motivo === 'cargue_canastas_orig' ? 'selected' : ''}>Cargue de Canastas</option>
-                            <option value="enriedo_costales_orig" ${parada.motivo === 'enriedo_costales_orig' ? 'selected' : ''}>Enriedo de Costales</option>
-                            <option value="otro" ${parada.motivo === 'otro' ? 'selected' : ''}>Otro (Especifique)</option>
-                        </select>
-                        <input type="text" name="otro_motivo[]" placeholder="Especifique el motivo 'Otro'" style="display:${parada.motivo === 'otro' ? 'block' : 'none'}; margin-top:5px;" value="${parada.otro}" id="otro_input_${index}">
-                        <button type="button" style="background-color:#dc3545; width:auto; padding:5px 10px; margin-top:10px;" onclick="eliminarParada(this)">
-                            Eliminar
-                        </button>`;
-                    contenedor.appendChild(nuevoCampo);
-
-                    // Aplicar máscara y validación a los campos restaurados
-                    const inicioInput = document.getElementById(`inicio_${index}`);
-                    const finInput = document.getElementById(`fin_${index}`);
-                    if (inicioInput.value) applyTimeMask(inicioInput, displayIdInicio);
-                    if (finInput.value) applyTimeMask(finInput, displayIdFin);
-                });
-            }
-
-            // Actualizar campo de jefe si hay lugar
-            if (data.lugar) {
-                actualizarCampos();
+        
+        function manejarOtroMotivo(selectElement) {
+            var otroInput = selectElement.nextElementSibling; 
+            if (selectElement.value === 'otro') {
+                otroInput.style.display = 'block';
+                otroInput.required = true;
+            } else {
+                otroInput.style.display = 'none';
+                otroInput.required = false;
+                otroInput.value = '';
             }
         }
 
-        // --- LÓGICA DE INICIO ---
         document.addEventListener('DOMContentLoaded', function() {
             var today = new Date();
             var dd = String(today.getDate()).padStart(2, '0');
             var mm = String(today.getMonth() + 1).padStart(2, '0');
             var yyyy = today.getFullYear();
-            if (!document.getElementById('fecha').value) {
-                document.getElementById('fecha').value = yyyy + '-' + mm + '-' + dd;
-            }
-
-            // Cargar datos guardados
-            cargarDatos();
-
-            // Añadir evento para guardar en tiempo real
-            document.querySelectorAll('input, select').forEach(el => {
-                el.addEventListener('input', guardarDatos);
-                el.addEventListener('change', guardarDatos);
-            });
-
-            // Botón agregar parada ya existe, pero aseguramos guardar
-            document.getElementById("btn-agregar-parada").addEventListener('click', function() {
-                setTimeout(guardarDatos, 100);
-            });
-
-            // Al enviar, limpiar localStorage (opcional: si quieres borrar tras envío)
-            document.querySelector('form').addEventListener('submit', function() {
-                // localStorage.removeItem('formulario_emergent_cold'); // descomenta si quieres borrar tras enviar
-            });
+            var currentDate = yyyy + '-' + mm + '-' + dd; 
+            document.getElementById('fecha').value = currentDate;
+            document.getElementById("lugar").addEventListener('change', actualizarCampos);
+            agregarCampoParada();
         });
     </script>
+
 </body>
 </html>
