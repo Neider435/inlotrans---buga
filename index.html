@@ -4,117 +4,23 @@
     <meta charset="UTF-8">
     <title>Registro - Emergent Cold</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
-            padding: 40px;
-        }
-        .logo-container {
-            position: absolute; 
-            top: 50px;
-            left: 50px;
-        }
-        .logo-container img {
-            width: 200px; 
-            height: auto;
-        }
-        form {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            width: 500px;
-            margin: auto;
-        }
-        .parada-group {
-            border: 1px dashed #ced4da;
-            padding: 10px;
-            margin-top: 15px;
-            border-radius: 5px;
-        }
-        #btn-agregar-parada {
-            background-color: #28a745; 
-            margin-top: 10px;
-            color: white;
-            border: none;
-        }
-        #btn-agregar-parada:hover { background-color: #1e7e34; }
-
-        /* Botón Borrar Todo (Rojo) */
-        #btn-borrar-todo {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            margin-top: 10px;
-        }
-        #btn-borrar-todo:hover { background-color: #a71d2a; }
-
-        label {
-            font-weight: bold;
-            display: block; 
-            margin-top: 15px;
-        }
-        select, input, button { 
-            width: 100%;
-            padding: 8px;
-            margin-top: 8px;
-            border-radius: 8px;
-            border: 1px solid #170303;
-        }
-        .time-row, .quantity-row {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-        .time-row > div, .quantity-row > div {
-            flex-grow: 1;
-            position: relative;
-        }
-        .time-display {
-            display: block;
-            margin-top: 5px;
-            font-size: 0.85em;
-            color: #007bff;
-            font-weight: bold;
-        }
-        .time-label {
-            font-weight: bold;
-            display: block; 
-            margin-top: 5px;
-            color: #007bff;
-        }
-        button[type="submit"] { 
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-            margin-top: 20px;
-            font-weight: bold;
-        }
-        button[type="submit"]:hover { background-color: #0056b3; }
-
-        .time-input-masked {
-            text-align: center;
-            font-size: 1.1em;
-            letter-spacing: 2px;
-        }
+        body { font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 40px; }
+        form { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 0 10px rgba(0,0,0,0.2); width: 500px; margin: auto; }
+        .parada-group { border: 1px dashed #ced4da; padding: 10px; margin-top: 15px; border-radius: 5px; position: relative; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        select, input, button { width: 100%; padding: 8px; margin-top: 8px; border-radius: 8px; border: 1px solid #170303; box-sizing: border-box; }
+        .time-row { display: flex; gap: 10px; }
+        .time-display { display: block; font-size: 0.8em; color: #007bff; font-weight: bold; margin-top: 4px; }
+        .btn-rojo { background-color: #dc3545; color: white; border: none; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        .btn-verde { background-color: #28a745; color: white; border: none; cursor: pointer; margin-top: 10px; }
+        button[type="submit"] { background-color: #007bff; color: white; border: none; margin-top: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="logo-container">
-        <img src="prueba.png" alt="Logo de la Empresa"> 
-    </div>
     <h2 style="text-align:center;">FORMULARIO - EMERGENT COLD</h2>
 
     <form id="formulario-registro" name="registro-emergent-cold" method="POST" data-netlify="true">
         <input type="hidden" name="form-name" value="registro-emergent-cold">
-
-        <div style="display:none;">
-            <input type="text" name="parada_inicio[]">
-            <input type="text" name="parada_fin[]">
-            <input type="text" name="motivo[]">
-            <input type="text" name="otro_motivo[]">
-        </div>
 
         <label for="lugar">Lugar de operación:</label>
         <select name="lugar" id="lugar" required onchange="actualizarCampos(); guardarProgreso();">
@@ -139,212 +45,116 @@
             <option value="Noche">Noche</option>
         </select>
         
-        <hr style="margin-top: 25px; border-style: dotted;">
-        <h3 style="text-align:center; font-size:1.1em; color:#d9611b;">REGISTRO DE PARADAS DE OPERACION</h3>
-        
+        <h3 style="text-align:center; color:#d9611b;">REGISTRO DE PARADAS</h3>
         <div id="paradas-contenedor"></div>
 
-        <button type="button" id="btn-agregar-parada" onclick="agregarCampoParada(); guardarProgreso();">
-            + Agregar Parada
-        </button>
+        <button type="button" class="btn-verde" onclick="agregarCampoParada(); guardarProgreso();">+ Agregar Parada</button>
         
-        <hr style="margin-top: 25px; border-style: dotted;">
-        <h3 style="text-align:center; font-size:1.1em; color:#296097;">TOTALES DE TURNO</h3>
-        
-        <label for="total_personas">Total Personas (Empleados):</label>
-        <input type="number" name="total_personas" id="total_personas" min="1" placeholder="Ej: 8" required oninput="guardarProgreso()">
-
-        <label for="canastas_totales">Total Canastas:</label>
-        <input type="number" name="canastas_totales" id="canastas_totales" min="0" placeholder="Ej: 150" required oninput="guardarProgreso()">
-
-        <label for="bultos_totales">Total Bultos:</label>
-        <input type="number" name="bultos_totales" id="bultos_totales" min="0" placeholder="Ej: 50" required oninput="guardarProgreso()">
-        
-        <label>Total Kilos / Gramos:</label>
-        <div class="quantity-row">
-            <div>
-                <input type="number" name="kilos_totales" id="kilos_totales" min="0" placeholder="0" required oninput="guardarProgreso()">
-                <span style="font-size: 0.8em; color: gray;">Kilos</span>
-            </div>
-            <div>
-                <input type="number" name="gramos_totales" id="gramos_totales" min="0" max="999" placeholder="0" required oninput="limitarGramos(this); guardarProgreso();">
-                <span style="font-size: 0.8em; color: gray;">Gramos</span>
-            </div>
-        </div>
+        <hr>
+        <label for="total_personas">Total Personas:</label>
+        <input type="number" name="total_personas" id="total_personas" required oninput="guardarProgreso()">
 
         <button type="submit">Enviar Registro</button>
-        <button type="button" id="btn-borrar-todo" onclick="borrarTodo()">BORRAR TODO EL FORMULARIO</button>
+        <button type="button" class="btn-rojo" onclick="borrarTodo()">BORRAR TODO EL FORMULARIO</button>
     </form>
 
     <script>
-        // --- PERSISTENCIA DE DATOS (LOCALSTORAGE) ---
+        // --- LOGICA DE PERSISTENCIA ---
         
         function guardarProgreso() {
-            const formData = new FormData(document.getElementById('formulario-registro'));
-            const data = {};
-            formData.forEach((value, key) => {
-                if (key.includes('[]')) {
-                    if (!data[key]) data[key] = [];
-                    data[key].push(value);
-                } else {
-                    data[key] = value;
-                }
+            const paradas = [];
+            document.querySelectorAll('.parada-group').forEach(grupo => {
+                paradas.push({
+                    inicio: grupo.querySelector('[name="parada_inicio[]"]').value,
+                    fin: grupo.querySelector('[name="parada_fin[]"]').value,
+                    motivo: grupo.querySelector('[name="motivo[]"]').value,
+                    otro: grupo.querySelector('[name="otro_motivo[]"]').value
+                });
             });
-            localStorage.setItem('registroEmergentData', JSON.stringify(data));
+
+            const data = {
+                lugar: document.getElementById('lugar').value,
+                jefe: document.getElementById('jefe').value,
+                fecha: document.getElementById('fecha').value,
+                turno: document.getElementById('turno').value,
+                total_personas: document.getElementById('total_personas').value,
+                paradas: paradas
+            };
+            localStorage.setItem('emergCold_v2', JSON.stringify(data));
         }
 
         function cargarProgreso() {
-            const savedData = localStorage.getItem('registroEmergentData');
-            if (!savedData) {
-                agregarCampoParada(); // Si no hay nada, agrega una parada vacía
+            const raw = localStorage.getItem('emergCold_v2');
+            if (!raw) {
+                agregarCampoParada(); 
                 return;
             }
-            const data = JSON.parse(savedData);
+            const data = JSON.parse(raw);
 
-            // Cargar campos simples
-            for (let key in data) {
-                if (!key.includes('[]')) {
-                    const el = document.getElementsByName(key)[0];
-                    if (el) el.value = data[key];
-                }
-            }
-            actualizarCampos();
+            // Cargar campos básicos
+            document.getElementById('lugar').value = data.lugar || "";
+            document.getElementById('jefe').value = data.jefe || "";
+            document.getElementById('fecha').value = data.fecha || "";
+            document.getElementById('turno').value = data.turno || "";
+            document.getElementById('total_personas').value = data.total_personas || "";
 
-            // Cargar paradas dinámicas
-            const inicios = data['parada_inicio[]'] || [];
-            const fines = data['parada_fin[]'] || [];
-            const motivos = data['motivo[]'] || [];
-            const otros = data['otro_motivo[]'] || [];
-
-            if (inicios.length > 0) {
-                inicios.forEach((val, i) => {
-                    agregarCampoParada(val, fines[i], motivos[i], otros[i]);
-                });
+            // Reconstruir paradas
+            if (data.paradas && data.paradas.length > 0) {
+                data.paradas.forEach(p => agregarCampoParada(p.inicio, p.fin, p.motivo, p.otro));
             } else {
                 agregarCampoParada();
             }
         }
 
         function borrarTodo() {
-            if (confirm("¿Estás seguro de que deseas borrar TODA la información ingresada?")) {
-                localStorage.removeItem('registroEmergentData');
-                location.reload(); // Recarga la página limpia
+            if (confirm("¿Limpiar todo?")) {
+                localStorage.removeItem('emergCold_v2');
+                window.location.reload();
             }
         }
 
-        // --- FUNCIONES ORIGINALES MEJORADAS ---
+        // --- FUNCIONES DE FORMULARIO ---
 
-        function limitarGramos(element) {
-            if (parseInt(element.value) > 999) element.value = 999;
+        function agregarCampoParada(valI='', valF='', valM='', valO='') {
+            const contenedor = document.getElementById('paradas-contenedor');
+            const index = contenedor.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'parada-group';
+            
+            div.innerHTML = `
+                <p><b>Parada #${index}</b></p>
+                <div class="time-row">
+                    <input type="text" name="parada_inicio[]" value="${valI}" placeholder="HH:MM" maxlength="5" oninput="mascaraHora(this); guardarProgreso();">
+                    <input type="text" name="parada_fin[]" value="${valF}" placeholder="HH:MM" maxlength="5" oninput="mascaraHora(this); guardarProgreso();">
+                </div>
+                <select name="motivo[]" onchange="mostrarOtro(this); guardarProgreso();">
+                    <option value="">Motivo...</option>
+                    <option value="aseo" ${valM=='aseo'?'selected':''}>Aseo</option>
+                    <option value="otro" ${valM=='otro'?'selected':''}>Otro</option>
+                </select>
+                <input type="text" name="otro_motivo[]" value="${valO}" placeholder="Especifique..." style="display:${valM=='otro'?'block':'none'};" oninput="guardarProgreso()">
+                <button type="button" class="btn-rojo" style="width:auto; padding:2px 10px;" onclick="this.parentNode.remove(); guardarProgreso();">X</button>
+            `;
+            contenedor.appendChild(div);
+        }
+
+        function mascaraHora(input) {
+            let v = input.value.replace(/\D/g,'');
+            if (v.length > 2) v = v.substring(0,2) + ":" + v.substring(2,4);
+            input.value = v;
+        }
+
+        function mostrarOtro(select) {
+            const campo = select.nextElementSibling;
+            campo.style.display = (select.value === 'otro') ? 'block' : 'none';
         }
 
         function actualizarCampos() {
-            var lugar = document.getElementById("lugar").value;
-            var campoJefe = document.getElementById("jefe");
-            var campoTurno = document.getElementById("turno");
-            var jefe = "";
-            
-            const jefesMap = {
-                "Celta": "Lorena Diaz",
-                "Interpark": "Carolina Rodriguez",
-                "Giron": "Jeison Aranda",
-                "Buga": "Giovanny Ayala"
-            };
-            
-            jefe = jefesMap[lugar] || "";
-            campoJefe.value = jefe;
-
-            if (jefe !== "" && campoTurno.value === "") {
-                var hour = new Date().getHours();
-                if (hour >= 6 && hour < 14) campoTurno.value = "Manana";
-                else if (hour >= 14 && hour < 22) campoTurno.value = "Tarde";
-                else campoTurno.value = "Noche";
-            }
+            const jefes = {"Celta":"Lorena Diaz","Interpark":"Carolina Rodriguez","Giron":"Jeison Aranda","Buga":"Giovanny Ayala"};
+            document.getElementById("jefe").value = jefes[document.getElementById("lugar").value] || "";
         }
 
-        function agregarCampoParada(valI = '', valF = '', valM = '', valO = '') {
-            var contenedor = document.getElementById('paradas-contenedor');
-            var index = contenedor.children.length + 1;
-            var nuevoCampo = document.createElement('div');
-            nuevoCampo.className = 'parada-group';
-            var idI = 'display-inicio-' + index;
-            var idF = 'display-fin-' + index;
-            
-            nuevoCampo.innerHTML = `
-                <p style="font-weight:bold; margin:0;">Parada #${index}</p>
-                <div class="time-row">
-                    <div>
-                        <span class="time-label">Inicio:</span>
-                        <input type="tel" name="parada_inicio[]" value="${valI}" class="time-input-masked" required placeholder="HH:MM" maxlength="5" oninput="applyTimeMask(this, '${idI}'); guardarProgreso();">
-                        <span id="${idI}" class="time-display"></span>
-                    </div>
-                    <div>
-                        <span class="time-label">Fin:</span>
-                        <input type="tel" name="parada_fin[]" value="${valF}" class="time-input-masked" required placeholder="HH:MM" maxlength="5" oninput="applyTimeMask(this, '${idF}'); guardarProgreso();">
-                        <span id="${idF}" class="time-display"></span>
-                    </div>
-                </div>
-                <label style="margin-top:10px;">Motivo:</label>
-                <select name="motivo[]" required onchange="manejarOtroMotivo(this); guardarProgreso();">
-                    <option value="">Seleccione motivo</option>
-                    <option value="pausas_activas" ${valM=='pausas_activas'?'selected':''}>Pausas Activas</option>
-                    <option value="desayuno_almuerzo_cena" ${valM=='desayuno_almuerzo_cena'?'selected':''}>Comida (Des/Alm/Cen)</option>
-                    <option value="aseo" ${valM=='aseo'?'selected':''}>Aseo</option>
-                    <option value="secado_piso" ${valM=='secado_piso'?'selected':''}>Secado de Piso</option>
-                    <option value="alistamiento_producto" ${valM=='alistamiento_producto'?'selected':''}>Alistamiento</option>
-                    <option value="otro" ${valM=='otro'?'selected':''}>Otro (Especifique)</option>
-                </select>
-                <input type="text" name="otro_motivo[]" value="${valO}" placeholder="Especifique..." style="display:${valM=='otro'?'block':'none'}; margin-top:5px;" oninput="guardarProgreso()">
-                <button type="button" style="background-color:#dc3545; width:auto; padding:5px; margin-top:10px; color:white; border:none;" onclick="this.parentNode.remove(); guardarProgreso();">Eliminar Parada</button>`;
-            
-            contenedor.appendChild(nuevoCampo);
-            // Ejecutar la máscara inicial para los displays de AM/PM
-            nuevoCampo.querySelectorAll('.time-input-masked').forEach(input => {
-                const disp = input.nextElementSibling.id;
-                convertirHoraMilitar(input, disp);
-            });
-        }
-
-        function applyTimeMask(input, displayId) {
-            var value = input.value.replace(/[^0-9]/g, '');
-            if (value.length > 2) value = value.substring(0, 2) + ':' + value.substring(2);
-            input.value = value.substring(0, 5);
-            convertirHoraMilitar(input, displayId);
-        }
-
-        function convertirHoraMilitar(input, displayId) {
-            var val = input.value;
-            var display = document.getElementById(displayId);
-            if (val.length === 5 && val.includes(':')) {
-                var parts = val.split(':');
-                var hh = parseInt(parts[0]), mm = parseInt(parts[1]);
-                if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
-                    var ampm = hh >= 12 ? 'P.M.' : 'A.M.';
-                    var h12 = hh % 12 || 12;
-                    display.style.color = '#155724';
-                    display.innerHTML = 'Normal: ' + String(h12).padStart(2, '0') + ':' + String(mm).padStart(2, '0') + ' ' + ampm;
-                    return;
-                }
-            }
-            display.innerHTML = '';
-        }
-
-        function manejarOtroMotivo(select) {
-            var otro = select.nextElementSibling;
-            if (select.value === 'otro') { otro.style.display = 'block'; otro.required = true; }
-            else { otro.style.display = 'none'; otro.required = false; }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            var today = new Date().toISOString().split('T')[0];
-            document.getElementById('fecha').value = today;
-            cargarProgreso(); // Aquí carga todo lo guardado anteriormente
-        });
-
-        // Borrar memoria al enviar con éxito
-        document.getElementById('formulario-registro').onsubmit = function() {
-            localStorage.removeItem('registroEmergentData');
-        };
+        window.onload = cargarProgreso;
     </script>
 </body>
 </html>
