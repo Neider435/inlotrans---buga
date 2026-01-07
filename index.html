@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - Emergent Cold</title>
     <style>
         body {
@@ -111,16 +112,7 @@
     </div>
     <h2 style="text-align:center;">FORMULARIO - EMERGENT COLD</h2>
 
-    <form id="formulario-registro" name="registro-emergent-cold" method="POST" data-netlify="true">
-        <input type="hidden" name="form-name" value="registro-emergent-cold">
-
-        <div style="display:none;">
-            <input type="text" name="parada_inicio[]">
-            <input type="text" name="parada_fin[]">
-            <input type="text" name="motivo[]">
-            <input type="text" name="otro_motivo[]">
-        </div>
-
+    <form id="formulario-registro">
         <label for="lugar">Lugar de operación:</label>
         <select name="lugar" id="lugar" required onchange="actualizarCampos(); guardarProgreso();">
             <option value="">Seleccione una opción</option>
@@ -184,14 +176,12 @@
         // --- LÓGICA DE PERSISTENCIA ---
         function guardarProgreso() {
             const data = {};
-            // Campos simples
             const ids = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) data[id] = el.value;
             });
 
-            // Paradas
             data.paradas = [];
             document.querySelectorAll('.parada-group').forEach(grupo => {
                 data.paradas.push({
@@ -213,7 +203,6 @@
             }
             const data = JSON.parse(saved);
 
-            // Cargar simples
             for (let key in data) {
                 if (key !== 'paradas') {
                     const el = document.getElementById(key);
@@ -222,7 +211,6 @@
             }
             actualizarCampos();
 
-            // Cargar paradas
             const contenedor = document.getElementById('paradas-contenedor');
             contenedor.innerHTML = '';
             if (data.paradas && data.paradas.length > 0) {
@@ -263,19 +251,17 @@
             var jefeAsignado = "";
             var now = new Date();
             var currentHour = now.getHours();
-            var turnoAsignadoValue = "";
 
             switch (lugarSeleccionado) {
                 case "Celta": jefeAsignado = "Lorena Diaz"; break;
                 case "Interpark": jefeAsignado = "Carolina Rodriguez"; break;
                 case "Giron": jefeAsignado = "Jeison Aranda"; break;
                 case "Buga": jefeAsignado = "Giovanny Ayala"; break;
-                default: jefeAsignado = ""; turnoAsignadoValue = "";
+                default: jefeAsignado = ""; 
             }
 
             if (jefeAsignado !== "" && campoTurno.value === "") {
-                turnoAsignadoValue = determinarTurnoEstandar(currentHour);
-                campoTurno.value = turnoAsignadoValue;
+                campoTurno.value = determinarTurnoEstandar(currentHour);
             }
             campoJefe.value = jefeAsignado;
         }
@@ -294,7 +280,7 @@
                 <option value="cargue_canastas_orig" ${valM=='cargue_canastas_orig'?'selected':''}>Cargue de Canastas</option>
                 <option value="enriedo_costales_orig" ${valM=='enriedo_costales_orig'?'selected':''}>Enriedo de Costales</option>
                 <option value="otro" ${valM=='otro'?'selected':''}>Otro (Especifique)</option>
-                </select>`;
+            </select>`;
         }
         
         function applyTimeMask(inputElement, displayElement) {
@@ -352,7 +338,6 @@
                 <button type="button" style="background-color:#dc3545; width:auto; padding:5px 10px; margin-top:10px; color:white; border:none;" onclick="this.parentNode.remove(); guardarProgreso();">Eliminar</button>`;
             
             contenedor.appendChild(nuevoCampo);
-            // Actualizar AM/PM si hay valores cargados
             if(valI) convertirHoraMilitar(nuevoCampo.querySelector('input[name="parada_inicio[]"]'), idI);
             if(valF) convertirHoraMilitar(nuevoCampo.querySelector('input[name="parada_fin[]"]'), idF);
         }
@@ -366,20 +351,84 @@
             }
         }
 
+        // === ENVIAR A GOOGLE SHEETS Y REDIRIGIR ===
+        async function enviarAGoogleSheet(formData) {
+            // 🔴 ¡REEMPLAZA ESTA URL POR LA DE TU WEB APP!
+            const URL_SCRIPT = "https://script.google.com/macros/s/TU_WEB_APP_URL/exec";
+
+            const flattened = {};
+            const simpleFields = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
+            simpleFields.forEach(field => {
+                flattened[field] = formData[field] || '';
+            });
+
+            if (formData.paradas) {
+                formData.paradas.forEach((parada, index) => {
+                    const i = index + 1;
+                    flattened[`parada_inicio_${i}`] = parada.inicio || '';
+                    flattened[`parada_fin_${i}`] = parada.fin || '';
+                    flattened[`motivo_${i}`] = parada.motivo || '';
+                    flattened[`otro_motivo_${i}`] = parada.otro || '';
+                });
+            }
+
+            try {
+                const response = await fetch(URL_SCRIPT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(flattened)
+                });
+
+                if (response.ok) {
+                    // ✅ Éxito: redirigir a accesses.html
+                    window.location.href = "accesses.html";
+                } else {
+                    alert("❌ Error al guardar en Google Sheets. Código: " + response.status);
+                }
+            } catch (error) {
+                console.error("Error de red:", error);
+                alert("❌ Error de conexión. Verifica tu internet o la URL del script.");
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             var today = new Date();
             var dd = String(today.getDate()).padStart(2, '0');
             var mm = String(today.getMonth() + 1).padStart(2, '0');
             var yyyy = today.getFullYear();
             document.getElementById('fecha').value = yyyy + '-' + mm + '-' + dd;
-            
             cargarProgreso();
         });
 
-        // Limpiar al enviar
-        document.getElementById('formulario-registro').onsubmit = function() {
-            localStorage.removeItem('registroEmergentData');
-        };
+        // Manejo del envío del formulario
+        document.getElementById('formulario-registro').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = {};
+            const ids = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) formData[id] = el.value;
+            });
+
+            formData.paradas = [];
+            document.querySelectorAll('.parada-group').forEach(grupo => {
+                formData.paradas.push({
+                    inicio: grupo.querySelector('input[name="parada_inicio[]"]').value,
+                    fin: grupo.querySelector('input[name="parada_fin[]"]').value,
+                    motivo: grupo.querySelector('select[name="motivo[]"]').value,
+                    otro: grupo.querySelector('input[name="otro_motivo[]"]').value
+                });
+            });
+
+            // Validación básica (HTML ya tiene 'required', pero por si acaso)
+            if (!formData.lugar || !formData.turno || !formData.fecha) {
+                alert("Por favor complete todos los campos obligatorios.");
+                return;
+            }
+
+            await enviarAGoogleSheet(formData);
+        });
     </script>
 </body>
 </html>
