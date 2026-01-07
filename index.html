@@ -88,7 +88,6 @@
         button:not(#btn-agregar-parada):not(#btn-borrar-todo):hover {
             background-color: #0056b3;
         }
-        /* Estilo Botón Rojo Borrar */
         #btn-borrar-todo {
             background-color: #dc3545;
             color: white;
@@ -173,7 +172,6 @@
     </form>
 
     <script>
-        // --- LÓGICA DE PERSISTENCIA ---
         function guardarProgreso() {
             const data = {};
             const ids = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
@@ -229,7 +227,6 @@
             }
         }
 
-        // --- LÓGICA ORIGINAL DEL FORMULARIO ---
         function limitarGramos(element) {
             var valor = parseInt(element.value);
             if (valor > 999) { element.value = 999; } 
@@ -351,46 +348,6 @@
             }
         }
 
-        // === ENVIAR A GOOGLE SHEETS Y REDIRIGIR ===
-        async function enviarAGoogleSheet(formData) {
-            // 🔴 ¡REEMPLAZA ESTA URL POR LA DE TU WEB APP!
-            const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbw3NzOE4VqHDgGVh_AQgOdev-0LkKbK39PEmOnn1zuDDkayTHfO2f4_mC3OA5EKh944/exec";
-
-            const flattened = {};
-            const simpleFields = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
-            simpleFields.forEach(field => {
-                flattened[field] = formData[field] || '';
-            });
-
-            if (formData.paradas) {
-                formData.paradas.forEach((parada, index) => {
-                    const i = index + 1;
-                    flattened[`parada_inicio_${i}`] = parada.inicio || '';
-                    flattened[`parada_fin_${i}`] = parada.fin || '';
-                    flattened[`motivo_${i}`] = parada.motivo || '';
-                    flattened[`otro_motivo_${i}`] = parada.otro || '';
-                });
-            }
-
-            try {
-                const response = await fetch(URL_SCRIPT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(flattened)
-                });
-
-                if (response.ok) {
-                    // ✅ Éxito: redirigir a accesses.html
-                    window.location.href = "accesses.html";
-                } else {
-                    alert("❌ Error al guardar en Google Sheets. Código: " + response.status);
-                }
-            } catch (error) {
-                console.error("Error de red:", error);
-                alert("❌ Error de conexión. Verifica tu internet o la URL del script.");
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             var today = new Date();
             var dd = String(today.getDate()).padStart(2, '0');
@@ -400,56 +357,49 @@
             cargarProgreso();
         });
 
-        // Manejo del envío del formulario (usando Netlify Function)
         document.getElementById('formulario-registro').addEventListener('submit', async function(e) {
-          e.preventDefault();
-        
-          const formData = {};
-          const ids = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
-          ids.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) formData[id] = el.value;
-          });
-        
-          formData.paradas = [];
-          document.querySelectorAll('.parada-group').forEach(grupo => {
-            formData.paradas.push({
-              inicio: grupo.querySelector('input[name="parada_inicio[]"]').value,
-              fin: grupo.querySelector('input[name="parada_fin[]"]').value,
-              motivo: grupo.querySelector('select[name="motivo[]"]').value,
-              otro: grupo.querySelector('input[name="otro_motivo[]"]').value
+            e.preventDefault();
+            
+            const formData = {};
+            const ids = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) formData[id] = el.value;
             });
-          });
-        
-          if (!formData.lugar || !formData.turno || !formData.fecha) {
-            alert("Por favor complete todos los campos obligatorios.");
-            return;
-          }
-        
-          try {
-            const response = await fetch("/.netlify/functions/enviar-registro", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(formData)
+
+            formData.paradas = [];
+            document.querySelectorAll('.parada-group').forEach(grupo => {
+                formData.paradas.push({
+                    inicio: grupo.querySelector('input[name="parada_inicio[]"]').value,
+                    fin: grupo.querySelector('input[name="parada_fin[]"]').value,
+                    motivo: grupo.querySelector('select[name="motivo[]"]').value,
+                    otro: grupo.querySelector('input[name="otro_motivo[]"]').value
+                });
             });
-        
-            if (response.ok) {
-              // La función hará la redirección con 302, pero por si acaso:
-              window.location.href = "accesses.html";
-            } else {
-              const error = await response.json();
-              alert("❌ Error: " + (error.error || "No se pudo enviar el registro."));
+
+            if (!formData.lugar || !formData.turno || !formData.fecha) {
+                alert("Por favor complete todos los campos obligatorios.");
+                return;
             }
-          } catch (err) {
-            console.error(err);
-            alert("❌ Error de conexión. Verifica tu internet.");
-          }
+
+            try {
+                const response = await fetch("/.netlify/functions/enviar-registro", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    window.location.href = "accesses.html";
+                } else {
+                    const error = await response.json();
+                    alert("❌ Error: " + (error.error || "No se pudo enviar el registro."));
+                }
+            } catch (err) {
+                console.error(err);
+                alert("❌ Error de conexión. Verifica tu internet.");
+            }
         });
     </script>
 </body>
 </html>
-
-
-
-
-
