@@ -12,6 +12,9 @@ exports.handler = async (event, context) => {
   try {
     const body = JSON.parse(event.body);
 
+    // 👇 Agregar logging para ver qué datos llegan
+    console.log("Datos recibidos:", body);
+
     const response = await fetch(URL_GOOGLE_SCRIPT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -19,7 +22,8 @@ exports.handler = async (event, context) => {
     });
 
     if (!response.ok) {
-      console.error("Error en Google Apps Script:", await response.text());
+      const errorText = await response.text();
+      console.error("Error en Google Apps Script:", errorText);
       return {
         statusCode: 502,
         body: JSON.stringify({ error: "Error al guardar en Google Sheets" })
