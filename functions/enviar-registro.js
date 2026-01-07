@@ -1,8 +1,7 @@
 // functions/enviar-registro.js
-const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbw3NzOE4VqHDgGVh_AQgOdev-0LkKbK39PEmOnn1zuDDkayTHfO2f4_mC3OA5EKh944/exec";
+const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbyGjqu8Z4-UIu5igTeY02DPTSyqQY65KsYw38ujRm149NLTzZiVDe0UB7T3f4VbmJQr/exec";
 
 exports.handler = async (event, context) => {
-  // Solo permitir método POST
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -11,10 +10,8 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Parsear el cuerpo del request (debe venir como JSON)
     const body = JSON.parse(event.body);
 
-    // Enviar los datos a Google Apps Script
     const response = await fetch(URL_GOOGLE_SCRIPT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -29,7 +26,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Éxito: redirigir a accesses.html
+    // Redirigir a accesses.html
     return {
       statusCode: 302,
       headers: {
