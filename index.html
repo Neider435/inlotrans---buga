@@ -400,38 +400,55 @@
             cargarProgreso();
         });
 
-        // Manejo del envío del formulario
+        // Manejo del envío del formulario (usando Netlify Function)
         document.getElementById('formulario-registro').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const formData = {};
-            const ids = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) formData[id] = el.value;
+          e.preventDefault();
+        
+          const formData = {};
+          const ids = ['lugar', 'jefe', 'fecha', 'turno', 'total_personas', 'canastas_totales', 'bultos_totales', 'kilos_totales', 'gramos_totales'];
+          ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) formData[id] = el.value;
+          });
+        
+          formData.paradas = [];
+          document.querySelectorAll('.parada-group').forEach(grupo => {
+            formData.paradas.push({
+              inicio: grupo.querySelector('input[name="parada_inicio[]"]').value,
+              fin: grupo.querySelector('input[name="parada_fin[]"]').value,
+              motivo: grupo.querySelector('select[name="motivo[]"]').value,
+              otro: grupo.querySelector('input[name="otro_motivo[]"]').value
             });
-
-            formData.paradas = [];
-            document.querySelectorAll('.parada-group').forEach(grupo => {
-                formData.paradas.push({
-                    inicio: grupo.querySelector('input[name="parada_inicio[]"]').value,
-                    fin: grupo.querySelector('input[name="parada_fin[]"]').value,
-                    motivo: grupo.querySelector('select[name="motivo[]"]').value,
-                    otro: grupo.querySelector('input[name="otro_motivo[]"]').value
-                });
+          });
+        
+          if (!formData.lugar || !formData.turno || !formData.fecha) {
+            alert("Por favor complete todos los campos obligatorios.");
+            return;
+          }
+        
+          try {
+            const response = await fetch("/.netlify/functions/enviar-registro", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(formData)
             });
-
-            // Validación básica (HTML ya tiene 'required', pero por si acaso)
-            if (!formData.lugar || !formData.turno || !formData.fecha) {
-                alert("Por favor complete todos los campos obligatorios.");
-                return;
+        
+            if (response.ok) {
+              // La función hará la redirección con 302, pero por si acaso:
+              window.location.href = "accesses.html";
+            } else {
+              const error = await response.json();
+              alert("❌ Error: " + (error.error || "No se pudo enviar el registro."));
             }
-
-            await enviarAGoogleSheet(formData);
+          } catch (err) {
+            console.error(err);
+            alert("❌ Error de conexión. Verifica tu internet.");
+          }
         });
     </script>
 </body>
 </html>
+
 
 
 
